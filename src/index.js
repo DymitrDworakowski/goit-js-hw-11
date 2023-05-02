@@ -1,51 +1,78 @@
-import Notiflix from "notiflix";
-import Axios from "axios";
+import './css/styles.css';
+import { pixabayImages } from './js/pixabay';
+import { refs } from './js/getRefs';
+import { LoadMoreBtn } from './js/load-more-btn';
+import { makeImageMarkup } from './js/markupService';
+import Notiflix  from 'notiflix';
 import SimpleLightbox from "simplelightbox";
+import "simplelightbox/dist/simple-lightbox.min.css";
 
-const input = document.querySelector(".input");
-const form = document.querySelector(".search-form");
-const button = document.querySelector(".button");
-const divImg = document.querySelector(".photo-card");
-const URL = "https://pixabay.com/api/?key=35794671-989ac978d0f5c3155771be810";
 
-form.addEventListener("input",searcImage);
+const pixabayImages = new pixabayImages();
+const loadMoreBtn = new LoadMoreBtn({ selektor: '.load-more', hidden: true });
+const lightbox = new SimpleLightbox('.gallery a', { captionDelay
+    : 250,
+});
 
-function searcImage(evt) {
-    const value = evt.target.value;
-    fetch(`${URL}&q=${value}`).then(resp =>{
-        if(!resp.ok){
-            Notiflix.Notify.failure(resp.statusText);
-        }
-        return resp.json();
-        
 
-    }).then((data) =>{
-        divImg.innerHTML = "";    
-        data.forEach((img) => {
-            const images = document.createElement("img");
-            images.src = img.imageURL;
-        })
-        
-    }) .catch(error => {
-        // Обробка помилок
-        Notiflix.Notify.failure('Помилка отримання даних:', error);
-    });
-    
+function onSearch(e) {
+    e.preventDefault();
+
+    const currentWord = e.currentTarget.elements.searchQuery.value.trim();
+    if (currentWord === '') {
+        return Notiflix.Notify.info(`Enter a word to search for images.`);
+    }
+    pixabayImages.searchQuery = currentWord;
+    loadMoreBtn.show();
+    pixabayImages.resetPage();
+    clearImageContainer();
+    fetchImages();
 }
 
+function clearImageContainer() {
+    refs.containerDiv.innerHTML = '';
+}
 
+function fetchImages() {
+    loadMoreBtn.disabled();
+    pixabayImages.fetchImages().then(({data}) => {
+        if (data.total === 0) {
+            Notiflix.Notify.failure(`Sorry, there are no images matching your search query: ${pixabayImages.searchQuery}. Please try again.`);
+            loadMoreBtn.hide();
+            return;
+        }
+        appendImagesMarkup(data);
+        onPageScrolling()
+        lightbox.refresh();
+        const { totalHits } = data;
 
-/* <img src="" alt="" loading="lazy" />
-      <div class="info">
-        <p class="info-item">
-          <b>Likes</b>
-        </p>
-        <p class="info-item">
-          <b>Views</b>
-        </p>
-        <p class="info-item">
-          <b>Comments</b>
-        </p>
-        <p class="info-item">
-          <b>Downloads</b>
-        </p> */
+        if (refs.containerDiv.children.length === totalHits ) {
+            Notiflix.Notify.info(`We're sorry, but you've reached the end of search results.`);
+            loadMoreBtn.hide();
+        } else {
+            loadMoreBtn.enable();
+            Notiflix.Notify.success(`Hooray! We found ${totalHits} images.`);
+        }
+    }).catch(handleError);
+}
+
+function handleError() {
+    console.log('Error!');
+}
+
+function appendImagesMarkup(data) {
+    refs.containerDiv.insertAdjacentHTML('beforeend', makeImageMarkup(data));
+}
+
+//  Плавная прокрутка страницы после запроса и отрисовки каждой следующей группы изображений
+function onPageScrolling(){ 
+    const { height: cardHeight } = refs.containerDiv
+        .firstElementChild.getBoundingClientRect();
+        window.scrollBy({
+        top: cardHeight * 2,
+        behavior: "smooth",
+        });
+}
+
+refs.formSearch.addEventListener('submit', onSearch);
+loadMoreBtn.refs.button.addEventListener('click', fetchImages);
