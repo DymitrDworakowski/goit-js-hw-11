@@ -3,7 +3,7 @@ axios.defaults.baseURL = 'https://pixabay.com/api';
 const API_KEY = '35794671-989ac978d0f5c3155771be810';
 const PARAM = 'per_page=40&orientation=horizontal&image_type=photo&safesearch=true';
 
-class pixabayImages {
+class PixabayImages {
     constructor(){
         this.searchQuery = '';
         this.page = 1;
@@ -29,5 +29,5 @@ class pixabayImages {
     }
 }
 
-export { pixabayImages };
+export { PixabayImages };
 

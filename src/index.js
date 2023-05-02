@@ -1,5 +1,5 @@
 import './css/styles.css';
-import { pixabayImages } from './js/pixabay';
+import { PixabayImages } from './js/pixabay';
 import { refs } from './js/getRefs';
 import { LoadMoreBtn } from './js/load-more-btn';
 import { makeImageMarkup } from './js/markupService';
@@ -8,7 +8,7 @@ import SimpleLightbox from "simplelightbox";
 import "simplelightbox/dist/simple-lightbox.min.css";
 
 
-const pixabayImages = new pixabayImages();
+const pixabayImages = new PixabayImages();
 const loadMoreBtn = new LoadMoreBtn({ selektor: '.load-more', hidden: true });
 const lightbox = new SimpleLightbox('.gallery a', { captionDelay
     : 250,
