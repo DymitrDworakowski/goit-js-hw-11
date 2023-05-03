@@ -17,7 +17,6 @@ const lightbox = new SimpleLightbox('.gallery a', { captionDelay
 
 function onSearch(e) {
     e.preventDefault();
-
     const currentWord = e.currentTarget.elements.searchQuery.value.trim();
     if (currentWord === '') {
         return Notiflix.Notify.info(`Enter a word to search for images.`);
@@ -33,28 +32,31 @@ function clearImageContainer() {
     refs.containerDiv.innerHTML = '';
 }
 
-function fetchImages() {
+async function fetchImages() {
+    try {
     loadMoreBtn.disabled();
-    pixabayImages.fetchImages().then(({data}) => {
-        if (data.total === 0) {
-            Notiflix.Notify.failure(`Sorry, there are no images matching your search query: ${pixabayImages.searchQuery}. Please try again.`);
-            loadMoreBtn.hide();
-            return;
-        }
-        appendImagesMarkup(data);
-        onPageScrolling()
-        lightbox.refresh();
-        const { totalHits } = data;
+    const { data } = await pixabayImages.fetchImages();
+    if (data.total === 0) {
+    Notiflix.Notify.failure(`Sorry, there are no images matching your search query: ${pixabayImages.searchQuery}. Please try again.`);
+    loadMoreBtn.hide();
+    return;
+    }
+    appendImagesMarkup(data);
+    onPageScrolling()
+    lightbox.refresh();
+    const { totalHits } = data;
 
-        if (refs.containerDiv.children.length === totalHits ) {
-            Notiflix.Notify.info(`We're sorry, but you've reached the end of search results.`);
-            loadMoreBtn.hide();
-        } else {
-            loadMoreBtn.enable();
-            Notiflix.Notify.success(`Hooray! We found ${totalHits} images.`);
-        }
-    }).catch(handleError);
-}
+    if (refs.containerDiv.children.length === totalHits ) {
+      Notiflix.Notify.info(`We're sorry, but you've reached the end of search results.`);
+      loadMoreBtn.hide();
+    } else {
+      loadMoreBtn.enable();
+    //   Notiflix.Notify.success(`Hooray! We found ${totalHits} images.`);
+    }
+    } catch (error) {
+    handleError(error);
+    }
+    };
 
 function handleError() {
     console.log('Error!');
@@ -69,7 +71,7 @@ function onPageScrolling(){
     const { height: cardHeight } = refs.containerDiv
         .firstElementChild.getBoundingClientRect();
         window.scrollBy({
-        top: cardHeight * 2,
+        top: cardHeight * 0,
         behavior: "smooth",
         });
 }
